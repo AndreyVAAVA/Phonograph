@@ -48,7 +48,7 @@ public abstract class AbsSlidingMusicPanelActivity extends AbsMusicServiceActivi
     private MiniPlayerFragment miniPlayerFragment;
 
     private ValueAnimator navigationBarColorAnimator;
-    private ArgbEvaluator argbEvaluator = new ArgbEvaluator();
+    private final ArgbEvaluator argbEvaluator = new ArgbEvaluator();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

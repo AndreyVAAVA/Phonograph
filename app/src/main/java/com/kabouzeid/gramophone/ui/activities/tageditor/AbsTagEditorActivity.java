@@ -383,7 +383,7 @@ public abstract class AbsTagEditorActivity extends AbsBaseActivity {
             @Nullable
             public final Map<FieldKey, String> fieldKeyValueMap;
             @Nullable
-            private ArtworkInfo artworkInfo;
+            private final ArtworkInfo artworkInfo;
 
             private LoadingInfo(Collection<String> filePaths, @Nullable Map<FieldKey, String> fieldKeyValueMap, @Nullable ArtworkInfo artworkInfo) {
                 this.filePaths = filePaths;

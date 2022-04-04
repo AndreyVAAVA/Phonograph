@@ -30,7 +30,7 @@ public class ArtistImageFetcher implements DataFetcher<InputStream> {
 
     private InputStream stream;
 
-    private boolean ignoreMediaStore;
+    private final boolean ignoreMediaStore;
 
     public ArtistImageFetcher(final ArtistImage model, boolean ignoreMediaStore) {
         this.model = model;

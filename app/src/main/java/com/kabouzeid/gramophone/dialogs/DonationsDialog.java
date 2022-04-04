@@ -173,7 +173,7 @@ public class DonationsDialog extends DialogFragment implements BillingProcessor.
 
     static class SkuDetailsAdapter extends ArrayAdapter<SkuDetails> {
         @LayoutRes
-        private static int LAYOUT_RES_ID = R.layout.item_donation_option;
+        private static final int LAYOUT_RES_ID = R.layout.item_donation_option;
 
         DonationsDialog donationsDialog;
 

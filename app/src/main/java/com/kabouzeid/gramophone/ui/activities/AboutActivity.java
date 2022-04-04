@@ -35,27 +35,27 @@ import de.psdev.licensesdialog.LicensesDialog;
 @SuppressWarnings("FieldCanBeLocal")
 public class AboutActivity extends AbsBaseActivity implements View.OnClickListener {
 
-    private static String GITHUB = "https://github.com/kabouzeid/Phonograph";
+    private static final String GITHUB = "https://github.com/kabouzeid/Phonograph";
 
-    private static String TWITTER = "https://twitter.com/swiftkarim";
-    private static String WEBSITE = "https://kabouzeid.com/";
+    private static final String TWITTER = "https://twitter.com/swiftkarim";
+    private static final String WEBSITE = "https://kabouzeid.com/";
 
-    private static String TRANSLATE = "https://phonograph.oneskyapp.com/collaboration/project?id=26521";
-    private static String RATE_ON_GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.kabouzeid.gramophone";
+    private static final String TRANSLATE = "https://phonograph.oneskyapp.com/collaboration/project?id=26521";
+    private static final String RATE_ON_GOOGLE_PLAY = "https://play.google.com/store/apps/details?id=com.kabouzeid.gramophone";
 
-    private static String AIDAN_FOLLESTAD_GITHUB = "https://github.com/afollestad";
+    private static final String AIDAN_FOLLESTAD_GITHUB = "https://github.com/afollestad";
 
-    private static String MICHAEL_COOK_WEBSITE = "https://cookicons.co/";
+    private static final String MICHAEL_COOK_WEBSITE = "https://cookicons.co/";
 
-    private static String MAARTEN_CORPEL_WEBSITE = "https://maartencorpel.com/";
-    private static String MAARTEN_CORPEL_TWITTER = "https://twitter.com/maartencorpel";
+    private static final String MAARTEN_CORPEL_WEBSITE = "https://maartencorpel.com/";
+    private static final String MAARTEN_CORPEL_TWITTER = "https://twitter.com/maartencorpel";
 
-    private static String ALEKSANDAR_TESIC_TWITTER = "https://twitter.com/djsalezmaj";
+    private static final String ALEKSANDAR_TESIC_TWITTER = "https://twitter.com/djsalezmaj";
 
-    private static String EUGENE_CHEUNG_GITHUB = "https://github.com/arkon";
-    private static String EUGENE_CHEUNG_WEBSITE = "https://echeung.me/";
+    private static final String EUGENE_CHEUNG_GITHUB = "https://github.com/arkon";
+    private static final String EUGENE_CHEUNG_WEBSITE = "https://echeung.me/";
 
-    private static String ADRIAN_TWITTER = "https://twitter.com/froschgames";
+    private static final String ADRIAN_TWITTER = "https://twitter.com/froschgames";
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;

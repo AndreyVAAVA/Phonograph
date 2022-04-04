@@ -26,6 +26,7 @@ import com.kabouzeid.gramophone.util.PreferenceUtil;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Aidan Follestad (afollestad)
@@ -66,7 +67,7 @@ public class ChangelogDialog extends DialogFragment {
             // Load from phonograph-changelog.html in the assets folder
             StringBuilder buf = new StringBuilder();
             InputStream json = getActivity().getAssets().open("phonograph-changelog.html");
-            BufferedReader in = new BufferedReader(new InputStreamReader(json, "UTF-8"));
+            BufferedReader in = new BufferedReader(new InputStreamReader(json, StandardCharsets.UTF_8));
             String str;
             while ((str = in.readLine()) != null)
                 buf.append(str);
