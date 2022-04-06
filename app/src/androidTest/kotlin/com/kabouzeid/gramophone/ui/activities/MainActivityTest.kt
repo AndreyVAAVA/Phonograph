@@ -5,9 +5,9 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.view.View
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.*
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -23,9 +23,11 @@ import androidx.test.rule.ActivityTestRule
 import com.kabouzeid.gramophone.R
 import com.kabouzeid.gramophone.adapter.PlaylistAdapter
 import com.kabouzeid.gramophone.adapter.SongFileAdapter
+import com.kabouzeid.gramophone.ui.activities.EspressoTestsMatchers.withDrawable
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.folders.FoldersFragment
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.library.LibraryFragment
 import com.kabouzeid.gramophone.ui.fragments.mainactivity.library.pager.PlaylistsFragment
+import org.hamcrest.Matcher
 import org.hamcrest.core.AllOf
 import org.junit.Rule
 import org.junit.Test
@@ -44,7 +46,6 @@ class MainActivityTest {
     var activityActivityTestRule = ActivityTestRule(
         MainActivity::class.java
     )
-
     @Test
     fun clickButtonHome() {
         val file = File(
@@ -107,9 +108,24 @@ class MainActivityTest {
                 }
             }
             onView(AllOf.allOf(isDisplayed(), withId(R.id.recycler_view)))
-                .perform(RecyclerViewActions.actionOnItem<PlaylistAdapter.ViewHolder>(
-                    hasDescendant(withText(activityActivityTestRule.activity.applicationContext.getString(R.string.favorites))), click()
-                ))
+                .perform(
+                    RecyclerViewActions.actionOnItem<PlaylistAdapter.ViewHolder>(
+                        hasDescendant(
+                            withText(
+                                activityActivityTestRule.activity.applicationContext.getString(
+                                    R.string.favorites
+                                )
+                            )
+                        ), click()
+                    )
+                )
+            try {
+                onView(withText(activityActivityTestRule.activity.applicationContext.getString(R.string.playlist_empty_text))).check(
+                    matches(isDisplayed())
+                )
+            } catch (ex: Throwable) {
+                Espresso.pressBack()
+            }
         }
     }
 }
@@ -145,5 +161,15 @@ class Wait(private val mCondition: Condition) {
     companion object {
         private const val CHECK_INTERVAL = 100
         private const val TIMEOUT = 10000
+    }
+}
+
+object EspressoTestsMatchers {
+    fun withDrawable(resourceId: Int): Matcher<View> {
+        return DrawableMatcher(resourceId)
+    }
+
+    fun noDrawable(): Matcher<View> {
+        return DrawableMatcher(-1)
     }
 }
