@@ -46,8 +46,11 @@ class MainActivityTest {
     var activityActivityTestRule = ActivityTestRule(
         MainActivity::class.java
     )
-    @Test
-    fun clickButtonHome() {
+
+    /**
+     * Preload songs and if everything was loaded, it returns true boolean, else it returns false boolean
+     */
+    private fun preloadSongs(): Boolean {
         val file = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
                 .toString() + "/" + "song1.mp3"
@@ -71,22 +74,34 @@ class MainActivityTest {
                 isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
             }
         } else isDownloadedMP3File = true
-        if (isDownloadedMP3File) {
-            onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
-            onView(withId(R.id.drawer_layout)).check(matches(isOpen()))
-            onView(withId(R.id.navigation_view))
-                .perform(NavigationViewActions.navigateTo(R.id.nav_folders))
-            Wait(object : Wait.Condition {
-                override fun check(): Boolean {
-                    return activityActivityTestRule.activity.currentFragment is FoldersFragment
-                }
-            }).waitForIt()
-            onView(withText("MUSIC")).check(matches(isDisplayed()))
-            onView(withId(R.id.recycler_view)).perform(
-                RecyclerViewActions.actionOnItem<SongFileAdapter.ViewHolder>(
-                    hasDescendant(withText("song1.mp3")), click()
-                )
+        return isDownloadedMP3File
+    }
+
+    /**
+     * It selects first downloaded song, named "song1.mp3", that can be used in different tests
+     */
+    private fun selectFirstDownloadedSong() {
+        onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
+        onView(withId(R.id.drawer_layout)).check(matches(isOpen()))
+        onView(withId(R.id.navigation_view))
+            .perform(NavigationViewActions.navigateTo(R.id.nav_folders))
+        Wait(object : Wait.Condition {
+            override fun check(): Boolean {
+                return activityActivityTestRule.activity.currentFragment is FoldersFragment
+            }
+        }).waitForIt()
+        onView(withText("MUSIC")).check(matches(isDisplayed()))
+        onView(withId(R.id.recycler_view)).perform(
+            RecyclerViewActions.actionOnItem<SongFileAdapter.ViewHolder>(
+                hasDescendant(withText("song1.mp3")), click()
             )
+        )
+    }
+
+    @Test
+    fun clickButtonHome() {
+        if (preloadSongs()) {
+            selectFirstDownloadedSong()
             onView(withId(R.id.mini_player_image)).perform(click())
             onView(withId(R.id.player_play_pause_fab)).perform(click())
             onView(withId(R.id.action_toggle_favorite)).perform(click())
@@ -107,6 +122,28 @@ class MainActivityTest {
                     onView(withId(R.id.pager)).perform(ViewPagerActions.scrollRight())
                 }
             }
+
+
+        }
+    }
+
+
+    /**
+     * This methods checks workability of favorite button in player with Favorite playlist
+     */
+    @Test
+    fun checkFavouriteWorkability() {
+        if (preloadSongs()) {
+            selectFirstDownloadedSong()
+            onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
+            onView(withId(R.id.drawer_layout)).check(matches(isOpen()))
+            onView(withId(R.id.navigation_view))
+                .perform(NavigationViewActions.navigateTo(R.id.nav_library))
+            Wait(object : Wait.Condition {
+                override fun check(): Boolean {
+                    return activityActivityTestRule.activity.currentFragment is LibraryFragment
+                }
+            }).waitForIt()
             onView(AllOf.allOf(isDisplayed(), withId(R.id.recycler_view)))
                 .perform(
                     RecyclerViewActions.actionOnItem<PlaylistAdapter.ViewHolder>(
@@ -123,8 +160,18 @@ class MainActivityTest {
                 onView(withText(activityActivityTestRule.activity.applicationContext.getString(R.string.playlist_empty_text))).check(
                     matches(isDisplayed())
                 )
+                onView(withId(R.id.mini_player_image)).perform(click())
+                onView(withId(R.id.player_play_pause_fab)).perform(click())
+                onView(withId(R.id.action_toggle_favorite)).perform(click())
+                onView(withText("song1.mp3")).check(matches(isDisplayed()))
             } catch (ex: Throwable) {
+                onView(withId(R.id.mini_player_image)).perform(click())
+                onView(withId(R.id.player_play_pause_fab)).perform(click())
+                onView(withId(R.id.action_toggle_favorite)).perform(click())
                 Espresso.pressBack()
+                onView(withText(activityActivityTestRule.activity.getString(R.string.playlist_empty_text))).check(
+                    matches(isDisplayed())
+                )
             }
         }
     }
