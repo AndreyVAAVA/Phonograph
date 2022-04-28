@@ -6,12 +6,12 @@ import android.app.DownloadManager
 import android.content.Context
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.Espresso.openActionBarOverflowOrOptionsMenu
-import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.action.ViewActions
@@ -67,8 +67,14 @@ class MainActivityTest {
     )
 
 
+    private val songName1 = "song1.mp3"
+    private val songLink1 =
+        "https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3"
+    private val songName2 = "song2.mp3"
+    private val songLink2 =
+        "https://cdn.pixabay.com/download/audio/2022/03/21/audio_50da5d4db6.mp3?filename=showreel-99195.mp3"
     private val playlistName = "Test Playlist"
-    private val stringRenamed = " Renamed"
+    private val stringRenamed = "Renamed"
     private val renamedPlaylistName = playlistName + stringRenamed
 
     private fun pressFavouriteButtonAndReturnBack() {
@@ -83,14 +89,10 @@ class MainActivityTest {
      */
     private fun selectFirstDownloadedSong() {
         goToDrawerActivity(R.id.nav_folders)
-        while (true) {
-            if (activityActivityTestRule.activity != null) break
-        }
-        Wait(object : Wait.Condition {
-            override fun check(): Boolean {
-                return activityActivityTestRule.activity.currentFragment is FoldersFragment
-            }
-        }).waitForIt()
+        while (activityActivityTestRule.activity == null)
+            onView(isRoot()).perform(waitFor(1000))
+        while (activityActivityTestRule.activity.currentFragment !is FoldersFragment)
+            onView(isRoot()).perform(waitFor(1000))
         onView(withText("MUSIC")).check(matches(isDisplayed()))
         onView(withId(R.id.recycler_view)).perform(
             RecyclerViewActions.actionOnItem<SongFileAdapter.ViewHolder>(
@@ -108,92 +110,33 @@ class MainActivityTest {
 
     @Test
     fun checkPrevNext() {
-        val file = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-                .toString() + "/" + "song1.mp3"
-        )
-        var isDownloadedMP3File = false
-        if (!file.exists()) {
-            val manager =
-                activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val uri: Uri =
-                Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
-            val request =
-                DownloadManager.Request(uri).setTitle("song1.mp3").setDescription("Downloading...")
-                    .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song1.mp3")
-                    .setMimeType("audio/MP3")
-                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    .setAllowedOverMetered(true)
-            manager.enqueue(request)
-
-            while (!isDownloadedMP3File) {
-                isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
-            }
-        } else isDownloadedMP3File = true
-        if (isDownloadedMP3File) {
-            val file2 = File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-                    .toString() + "/" + "song2.mp3"
+        val id = preloadSongs(songName1, songLink1)
+        var status = true
+        while (status)
+            status = checkStatus(
+                this.activityActivityTestRule.activity.applicationContext,
+                getStatus(this.activityActivityTestRule.activity.applicationContext, id)
             )
-            isDownloadedMP3File = false
-            if (!file.exists()) {
-                val manager2 =
-                    activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                val uri2: Uri =
-                    Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
-                val request2 =
-                    DownloadManager.Request(uri2).setTitle("song2.mp3")
-                        .setDescription("Downloading...")
-                        .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                        .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song2.mp3")
-                        .setMimeType("audio/MP3")
-                        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        .setAllowedOverMetered(true)
-                manager2.enqueue(request2)
+        selectFirstDownloadedSong()
+        onView(withId(R.id.mini_player_image)).perform(click())
+        onView(withId(R.id.player_play_pause_fab)).perform(click())
+        onView(withId(R.id.player_next_button)).perform(click())
+        onView(withId(R.id.player_prev_button)).perform(click())
 
-                while (!isDownloadedMP3File) {
-                    isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
-                }
-            } else isDownloadedMP3File = true
-            if (isDownloadedMP3File) {
-                selectFirstDownloadedSong()
-                onView(withId(R.id.mini_player_image)).perform(click())
-                onView(withId(R.id.player_play_pause_fab)).perform(click())
-                onView(withId(R.id.player_next_button)).perform(click())
-                onView(withId(R.id.player_prev_button)).perform(click())
-            }
-        }
     }
-/**
- * This test checks is play/pause button fully workable. (in meaning does music start playing and stops)
- */
-@Test
-fun checkPlayPause() {
-    val file = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-            .toString() + "/" + "song1.mp3"
-    )
-    var isDownloadedMP3File = false
-    if (!file.exists()) {
-        val manager =
-            activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri: Uri =
-            Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
-        val request =
-            DownloadManager.Request(uri).setTitle("song1.mp3").setDescription("Downloading...")
-                .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song1.mp3")
-                .setMimeType("audio/MP3")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-        manager.enqueue(request)
 
-        while (!isDownloadedMP3File) {
-            isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
-        }
-    } else isDownloadedMP3File = true
-    if (isDownloadedMP3File) {
+    /**
+     * This test checks is play/pause button fully workable. (in meaning does music start playing and stops)
+     */
+    @Test
+    fun checkPlayPause() {
+        val id = preloadSongs(songName1, songLink1)
+        var status = true
+        while (status)
+            status = checkStatus(
+                this.activityActivityTestRule.activity.applicationContext,
+                getStatus(this.activityActivityTestRule.activity.applicationContext, id)
+            )
         selectFirstDownloadedSong()
         onView(withId(R.id.mini_player_image)).perform(click())
         onView(withId(R.id.player_play_pause_fab)).perform(click())
@@ -224,42 +167,24 @@ fun checkPlayPause() {
         )
         onView(withId(R.id.player_play_pause_fab)).perform(click())
     }
-}
 
-/**
- * IMPORTANT!!! PLAYLISTS WITH STRING VALUES FROM VARIABLES playlistName AND renamedPlaylistName MUST NOT EXISTS
- * In short: It checks ability of: creating/deleting playlist, adding/deleting songs to/from playlist and renaming of playlist
- * This test does search, then add song that was found to playlist (by creating it), then it goes back and open this playlist
- * After playlist was opened, it deletes previously added song,
- * then renames playlist(and of course checks if playlist was renamed) and then, deletes playlist.
- */
-@Test
-fun checkPlaylistCreatingSongAddingAndBothDeletingAndWithPlaylistRenaming() {
-    // yes I know about Single Responsibility Principe, but that is the most safest solution.(In compare to other solutions that I see)
-    val file = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-            .toString() + "/" + "song1.mp3"
-    )
-    var isDownloadedMP3File = false
-    if (!file.exists()) {
-        val manager =
-            activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri: Uri =
-            Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
-        val request =
-            DownloadManager.Request(uri).setTitle("song1.mp3").setDescription("Downloading...")
-                .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song1.mp3")
-                .setMimeType("audio/MP3")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-        manager.enqueue(request)
-
-        while (!isDownloadedMP3File) {
-            isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
-        }
-    } else isDownloadedMP3File = true
-    if (isDownloadedMP3File) {
+    /**
+     * IMPORTANT!!! PLAYLISTS WITH STRING VALUES FROM VARIABLES playlistName AND renamedPlaylistName MUST NOT EXISTS
+     * In short: It checks ability of: creating/deleting playlist, adding/deleting songs to/from playlist and renaming of playlist
+     * This test does search, then add song that was found to playlist (by creating it), then it goes back and open this playlist
+     * After playlist was opened, it deletes previously added song,
+     * then renames playlist(and of course checks if playlist was renamed) and then, deletes playlist.
+     */
+    @Test
+    fun checkPlaylistCreatingSongAddingAndBothDeletingAndWithPlaylistRenaming() {
+        // yes I know about Single Responsibility Principe, but that is the most safest solution.(In compare to other solutions that I see)
+        val id = preloadSongs(songName1, songLink1)
+        var status = true
+        while (status)
+            status = checkStatus(
+                this.activityActivityTestRule.activity.applicationContext,
+                getStatus(this.activityActivityTestRule.activity.applicationContext, id)
+            )
         onView(withId(R.id.action_search))
             .perform(click())
         onView(withId(R.id.search_src_text)).perform(typeText("song1"))
@@ -316,63 +241,27 @@ fun checkPlaylistCreatingSongAddingAndBothDeletingAndWithPlaylistRenaming() {
         onView(withText(R.string.action_delete)).perform(click())
         onView(withText(R.string.delete_action)).perform(click())
     }
-}
 
-/*fun withTitle(title: String?): MenuItemTitleMatcher? {
-    return MenuItemTitleMatcher(title)
-}
-
-class MenuItemTitleMatcher(private val title: String?) : BaseMatcher<Any?>() {
-    override fun matches(o: Any): Boolean {
-        return if (o is MenuItem) {
-            (o as MenuItem).getTitle().equals(title)
-        } else false
-    }
-
-    override fun describeTo(description: Description?) {}
-}*/
-
-/**
- * IMPORTANT!!! FAVORITE MUST NOT EXISTS OR BE EMPTY
- * This methods checks workability of favorite button in player with Favorite playlist.
- */
-@Test
-fun checkFavoriteWorkability() {
-    deleteAllDownloadedSongFromMusicDir()
-    val file = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-            .toString() + "/" + "song1.mp3"
-    )
-    var isDownloadedMP3File = false
-    if (!file.exists()) {
-        val manager =
-            activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val uri: Uri =
-            Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
-        val request =
-            DownloadManager.Request(uri).setTitle("song1.mp3").setDescription("Downloading...")
-                .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song1.mp3")
-                .setMimeType("audio/MP3")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setAllowedOverMetered(true)
-        manager.enqueue(request)
-
-        while (!isDownloadedMP3File) {
-            isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
-        }
-    } else isDownloadedMP3File = true
-    if (isDownloadedMP3File) {
+    /**
+     * IMPORTANT!!! FAVORITE MUST NOT EXISTS OR BE EMPTY
+     * This methods checks workability of favorite button in player with Favorite playlist.
+     */
+    @Test
+    fun checkFavoriteWorkability() {
+        deleteAllDownloadedSongFromMusicDir()
+        val id = preloadSongs(songName1, songLink1)
+        var status = true
+        while (status)
+            status = checkStatus(
+                this.activityActivityTestRule.activity.applicationContext,
+                getStatus(this.activityActivityTestRule.activity.applicationContext, id)
+            )
         selectFirstDownloadedSong()
         goToDrawerActivity(R.id.nav_library)
-        while (true) {
-            if (activityActivityTestRule.activity != null) break
-        }
-        Wait(object : Wait.Condition {
-            override fun check(): Boolean {
-                return activityActivityTestRule.activity.currentFragment is LibraryFragment
-            }
-        }).waitForIt()
+        while (activityActivityTestRule.activity == null)
+            onView(isRoot()).perform(waitFor(1000))
+        while (activityActivityTestRule.activity.currentFragment !is LibraryFragment)
+            onView(isRoot()).perform(waitFor(1000))
         while (true) {
             if ((activityActivityTestRule.activity.currentFragment as LibraryFragment).currentFragment is PlaylistsFragment) {
                 break
@@ -411,61 +300,106 @@ fun checkFavoriteWorkability() {
             onView(withText(textToCompare)).check(matches(isDisplayed()))
         }
     }
-}
 
-/**
- * Preload songs and if everything was loaded, it returns true boolean, else it returns false boolean
- */
-private fun preloadSongs(): Boolean {
-    val file = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-            .toString() + "/" + "song1.mp3"
-    )
-    var isDownloadedMP3File = false
-    if (!file.exists()) {
+    private fun getStatus(context: Context, downloadId: Long): Int {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val query = DownloadManager.Query()
+        query.setFilterById(downloadId) // filter your download bu download Id
+        val c = downloadManager.query(query)
+        if (c.moveToFirst()) {
+            val status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS))
+            c.close()
+            Log.i("DOWNLOAD_STATUS", status.toString())
+            return status
+        }
+        Log.i("AUTOMATION_DOWNLOAD", "DEFAULT")
+        return -1
+    }
+
+    private fun checkStatus(context: Context, status: Int): Boolean {
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val query = DownloadManager.Query()
+        query.setFilterByStatus(status)
+        val c = downloadManager.query(query)
+        if (c.moveToFirst()) {
+            c.close()
+            Log.i("DOWNLOAD_STATUS", status.toString())
+            return true
+        }
+        Log.i("AUTOMATION_DOWNLOAD", "DEFAULT")
+        return false
+    }
+
+    /**
+     * Preload songs and if everything was loaded, it returns true boolean, else it returns false boolean
+     */
+    private fun preloadSongs(songName: String, songLink: String): Long {
+        val file = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+                .toString() + "/" + songName
+        )
+        var isDownloadedMP3File = false
         val manager =
             activityActivityTestRule.activity.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val uri: Uri =
-            Uri.parse("https://cdn.pixabay.com/download/audio/2022/03/23/audio_07b2a04be3.mp3?filename=order-99518.mp3")
+            Uri.parse(songLink)
+        DownloadManager.Query()
+        val id = activityActivityTestRule.activity.intent.getLongExtra(
+            DownloadManager.EXTRA_DOWNLOAD_ID,
+            -1
+        )
         val request =
-            DownloadManager.Request(uri).setTitle("song1.mp3").setDescription("Downloading...")
+            DownloadManager.Request(uri).setTitle(songName).setDescription("Downloading...")
                 .setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI xor DownloadManager.Request.NETWORK_MOBILE)
-                .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "song1.mp3")
+                .setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, songName)
                 .setMimeType("audio/MP3")
                 .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                 .setAllowedOverMetered(true)
-        manager.enqueue(request)
+        return manager.enqueue(request)
+    }
 
-        while (!isDownloadedMP3File) {
-            isDownloadedMP3File = MusicDownloadFileBroadcastChecker.isDownloadComplete
+
+    private fun deleteAllDownloadedSongFromMusicDir() {
+        val dir = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
+                .toString()
+        )
+        val files: Array<File>? = dir.listFiles()
+        if (files != null) {
+            for (file in files) {
+                file.delete()
+            }
         }
-    } else isDownloadedMP3File = true
-    return isDownloadedMP3File
-}
+    }
 
-
-private fun deleteAllDownloadedSongFromMusicDir() {
-    val dir = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC)
-            .toString()
-    )
-    val files: Array<File>? = dir.listFiles()
-    if (files != null) {
-        for (file in files) {
-            file.delete()
+    private fun waitFor(delay: Long): ViewAction? {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View> = isRoot()
+            override fun getDescription(): String = "wait for $delay milliseconds"
+            override fun perform(uiController: UiController, v: View?) {
+                uiController.loopMainThreadForAtLeast(delay)
+            }
         }
     }
 }
 
-private fun waitFor(delay: Long): ViewAction? {
-    return object : ViewAction {
-        override fun getConstraints(): Matcher<View> = isRoot()
-        override fun getDescription(): String = "wait for $delay milliseconds"
-        override fun perform(uiController: UiController, v: View?) {
-            uiController.loopMainThreadForAtLeast(delay)
+object MyViewAction {
+    fun clickChildViewWithId(id: Int): ViewAction {
+        return object : ViewAction {
+            override fun getConstraints(): Matcher<View>? {
+                return null
+            }
+
+            override fun getDescription(): String {
+                return "Click on a child view with specified id."
+            }
+
+            override fun perform(uiController: UiController?, view: View) {
+                val v = view.findViewById<View>(id)
+                v.performClick()
+            }
         }
     }
-}
 }
 
 /*fun swipeDown(): ViewAction? {
@@ -475,7 +409,7 @@ private fun waitFor(delay: Long): ViewAction? {
     )
 }*/
 
-class Wait(private val mCondition: Condition) {
+/*class Wait(private val mCondition: Condition) {
     interface Condition {
         fun check(): Boolean
     }
@@ -500,27 +434,9 @@ class Wait(private val mCondition: Condition) {
         private const val CHECK_INTERVAL = 100
         private const val TIMEOUT = 10000
     }
-}
+}*/
 
-object MyViewAction {
-    fun clickChildViewWithId(id: Int): ViewAction {
-        return object : ViewAction {
-            override fun getConstraints(): Matcher<View>? {
-                return null
-            }
-
-            override fun getDescription(): String {
-                return "Click on a child view with specified id."
-            }
-
-            override fun perform(uiController: UiController?, view: View) {
-                val v = view.findViewById<View>(id)
-                v.performClick()
-            }
-        }
-    }
-}
-
+/*
 object EspressoTestsMatchers {
     fun withDrawable(resourceId: Int): Matcher<View> {
         return DrawableMatcher(resourceId)
@@ -529,4 +445,4 @@ object EspressoTestsMatchers {
     fun noDrawable(): Matcher<View> {
         return DrawableMatcher(-1)
     }
-}
+}*/
